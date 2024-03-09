@@ -346,10 +346,10 @@ impl DojoWorld {
         for keys in models_keys {
             let model = cairo_short_string_to_felt(&keys.model)
                 .map_err(ParseError::CairoShortStringToFelt)?;
-
+            tracing::info!("Subscribing to model: {}, key: {:?}", model, keys);
             let proto::types::ModelMetadata { packed_size, .. } =
                 self.model_metadata(&keys.model).await?;
-
+            tracing::info!("packed sized  {:?}", packed_size);
             subs.push(ModelDiffRequest {
                 keys,
                 model: subscriptions::model_diff::ModelMetadata {
@@ -456,7 +456,9 @@ impl proto::world::world_server::World for DojoWorld {
         &self,
         request: Request<SubscribeModelsRequest>,
     ) -> ServiceResult<Self::SubscribeModelsStream> {
+        tracing::info!("subscribe_models: {:?}", request);
         let SubscribeModelsRequest { models_keys } = request.into_inner();
+        tracing::info!("models_keys: {:?}", models_keys);
         let rx = self
             .subscribe_models(models_keys)
             .await
