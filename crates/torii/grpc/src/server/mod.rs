@@ -358,7 +358,7 @@ impl DojoWorld {
                 },
             });
         }
-
+        tracing::info!("add subscriber  {:?}", subs.len());
         self.state_diff_manager.add_subscriber(subs).await
     }
 

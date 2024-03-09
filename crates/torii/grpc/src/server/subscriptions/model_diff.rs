@@ -54,7 +54,6 @@ impl StateDiffManager {
         let id = rand::thread_rng().gen::<usize>();
 
         let (sender, receiver) = channel(1);
-
         // convert the list of entites into a list storage addresses
         let storage_addresses = reqs
             .into_iter()
@@ -79,12 +78,13 @@ impl StateDiffManager {
             .into_iter()
             .flatten()
             .collect::<HashSet<FieldElement>>();
+        tracing::info!("state diff manager: adding subscriber with id {id}, {storage_addresses:?}");
 
         self.subscribers
             .write()
             .await
             .insert(id, ModelDiffSubscriber { storage_addresses, sender });
-
+        tracing::info!("write map");
         Ok(receiver)
     }
 
