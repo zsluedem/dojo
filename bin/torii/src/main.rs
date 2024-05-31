@@ -13,6 +13,7 @@
 use std::net::SocketAddr;
 use std::str::FromStr;
 use std::sync::Arc;
+use std::time::Duration;
 
 use clap::Parser;
 use common::parse::{parse_socket_address, parse_url};
@@ -109,6 +110,10 @@ struct Args {
     /// Chunk size of the events page when indexing using events
     #[arg(long, default_value = "1000")]
     events_chunk_size: u64,
+
+    /// Http keep alive interval, milliseconds
+    #[arg(long)]
+    http_keepalive_interval: Option<u64>,
 }
 
 #[tokio::main]
@@ -186,12 +191,14 @@ async fn main() -> anyhow::Result<()> {
     );
 
     let shutdown_rx = shutdown_tx.subscribe();
+    let keepalive_interval = args.http_keepalive_interval.map(Duration::from_secs);
     let (grpc_addr, grpc_server) = torii_grpc::server::new(
         shutdown_rx,
         &pool,
         block_rx,
         args.world_address,
         Arc::clone(&provider),
+        keepalive_interval,
     )
     .await?;
 

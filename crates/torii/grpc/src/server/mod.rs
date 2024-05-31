@@ -7,6 +7,7 @@ use std::pin::Pin;
 use std::str;
 use std::str::FromStr;
 use std::sync::Arc;
+use std::time::Duration;
 
 use dojo_types::schema::Ty;
 use futures::Stream;
@@ -802,6 +803,7 @@ pub async fn new(
     block_rx: Receiver<u64>,
     world_address: FieldElement,
     provider: Arc<JsonRpcClient<HttpTransport>>,
+    keepalive_interval: Option<Duration>,
 ) -> Result<
     (SocketAddr, impl Future<Output = Result<(), tonic::transport::Error>> + 'static),
     std::io::Error,
@@ -820,6 +822,8 @@ pub async fn new(
     let server_future = Server::builder()
         // GrpcWeb is over http1 so we must enable it.
         .accept_http1(true)
+        .http2_keepalive_interval(keepalive_interval)
+        .tcp_keepalive(keepalive_interval)
         .add_service(reflection)
         .add_service(tonic_web::enable(server))
         .serve_with_incoming_shutdown(TcpListenerStream::new(listener), async move {

@@ -5,6 +5,7 @@ pub mod subscription;
 use std::cell::OnceCell;
 use std::collections::HashSet;
 use std::sync::Arc;
+use std::time::Duration;
 
 use dojo_types::packing::unpack;
 use dojo_types::schema::Ty;
@@ -58,7 +59,12 @@ impl Client {
         world: FieldElement,
         models_keys: Option<Vec<KeysClause>>,
     ) -> Result<Self, Error> {
-        let mut grpc_client = torii_grpc::client::WorldClient::new(torii_url, world).await?;
+        let endpoint: tonic::transport::Endpoint = torii_url.try_into().expect("error");
+        let endpoint = endpoint
+            .http2_keep_alive_interval(Duration::from_secs(5))
+            .tcp_keepalive(Some(Duration::from_secs(5)));
+
+        let mut grpc_client = torii_grpc::client::WorldClient::new(endpoint, world).await?;
 
         let relay_client = torii_relay::client::RelayClient::new(relay_url)?;
 
